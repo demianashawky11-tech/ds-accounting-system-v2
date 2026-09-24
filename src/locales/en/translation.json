@@ -1,0 +1,87 @@
+{
+  "app_title": "DS Accounting Office System",
+  "main_menu": "Main Menu",
+  
+  "navigation": {
+    "dashboard": "Dashboard",
+    "follow_up": "Follow-up Center",
+    "clients": "Clients Management",
+    "tax_returns": "Tax Returns",
+    "documents": "Documents & Archive",
+    "calendar": "Calendar & Appointments",
+    "legal_cases": "Legal Cases",
+    "tasks": "Tasks",
+    "employees": "Employees",
+    "reports": "Financial Reports",
+    "notifications": "Notifications",
+    "import_export": "Import & Export",
+    "settings": "System Settings",
+    "profile": "Profile"
+  },
+
+  "dashboard": {
+    "welcome": "Welcome back!",
+    "sub_text": "Here is a quick summary of the office performance today.",
+    "total_clients": "Total Clients",
+    "pending_invoices": "Pending Invoices",
+    "uploaded_docs": "Uploaded Documents",
+    "monthly_revenue": "Monthly Revenue",
+    "recent_activities": "Recent Activities",
+    "no_alerts": "No new alerts. Everything is running perfectly!"
+  },
+
+  "clients": {
+    "title": "Client Records",
+    "list_title": "Clients List",
+    "add_new": "Add New Client",
+    "search_placeholder": "Search by name, code, or file number...",
+    "client_name": "Client / Company Name",
+    "client_code": "Client Code",
+    "file_number": "File Number",
+    "tax_number": "Tax Number",
+    "commercial_register": "Commercial Register",
+    "phone": "Phone Number",
+    "email": "Email Address",
+    "company_type": "Company Type",
+    "status": "Status",
+    "active": "Active",
+    "inactive": "Inactive"
+  },
+
+  "tasks": {
+    "title": "Task Management",
+    "add_new": "Add New Task",
+    "task_name": "Task Name",
+    "employee": "Assigned Employee",
+    "due_date": "Due Date",
+    "priority": "Priority",
+    "status": "Status",
+    "pending": "Pending",
+    "in_progress": "In Progress",
+    "completed": "Completed"
+  },
+
+  "documents": {
+    "title": "Documents & Archive",
+    "upload": "Upload New Document",
+    "doc_name": "Document Name",
+    "doc_type": "Document Type",
+    "upload_date": "Upload Date",
+    "tax_return": "Tax Return",
+    "vat": "VAT",
+    "commercial_doc": "Official Documents"
+  },
+
+  "actions": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "edit": "Edit",
+    "delete": "Delete",
+    "view_data": "View Data",
+    "actions_col": "Actions",
+    "search": "Search...",
+    "loading": "Loading...",
+    "success": "Success",
+    "error": "An error occurred, please try again"
+  }
+}
