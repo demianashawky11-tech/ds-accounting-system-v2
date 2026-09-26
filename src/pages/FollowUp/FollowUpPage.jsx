@@ -5,57 +5,58 @@ const FollowUpPage = () => {
   const { t } = useTranslation();
 
   const stats = [
-    { title: "مواعيد اليوم", count: "05", color: "#2563eb" },
-    { title: "إقرارات مستحقة", count: "03", color: "#dc2626" },
-    { title: "مهام متأخرة", count: "02", color: "#d97706" },
-    { title: "بلغوا حد التسجيل (VAT)", count: "04", color: "#059669" },
+    { title: "مواعيد اليوم", count: "05", color: "text-blue-600" },
+    { title: "إقرارات مستحقة", count: "03", color: "text-red-600" },
+    { title: "مهام متأخرة", count: "02", color: "text-orange-600" },
+    { title: "بلغوا حد التسجيل (VAT)", count: "04", color: "text-emerald-600" },
   ];
 
   return (
-    <div style={{ padding: '24px', backgroundColor: '#f8fafc', minHeight: '100vh' }}>
-      <h2 style={{ fontSize: '24px', fontWeight: 'bold', marginBottom: '24px', color: '#1e293b' }}>
-        {t('navigation.follow_up')}
-      </h2>
-      
+    <div className="p-4 md:p-6 w-full h-full">
+
+      {/* العنوان */}
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-gray-800">
+          {t('navigation.follow_up')}
+        </h1>
+      </div>
+
       {/* بطاقات الإحصائيات */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '32px' }}>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         {stats.map((stat, i) => (
-          <div key={i} style={{ backgroundColor: 'white', padding: '20px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', border: '1px solid #e2e8f0' }}>
-            <p style={{ fontSize: '14px', color: '#64748b', marginBottom: '4px' }}>{stat.title}</p>
-            <p style={{ fontSize: '32px', fontWeight: 'bold', color: stat.color }}>{stat.count}</p>
+          <div
+            key={i}
+            className="p-4 bg-white shadow-md border border-[#e8dcc8] rounded-xl"
+          >
+            <p className="text-sm text-gray-500">{stat.title}</p>
+            <p className={`text-3xl font-bold ${stat.color}`}>{stat.count}</p>
           </div>
         ))}
       </div>
 
-      {/* الجدول المحدث مع التاريخ والإجراء */}
-      <div style={{ backgroundColor: 'white', padding: '24px', borderRadius: '12px', boxShadow: '0 1px 3px rgba(0,0,0,0.1)', border: '1px solid #e2e8f0' }}>
-        <h3 style={{ fontWeight: 'bold', fontSize: '18px', marginBottom: '16px', color: '#334155' }}>
-          متابعة العملاء: التسجيل في القيمة المضافة
-        </h3>
-        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'right' }}>
-          <thead>
-            <tr style={{ borderBottom: '2px solid #f1f5f9', color: '#64748b' }}>
-              <th style={{ padding: '12px 0' }}>العميل</th>
-              <th style={{ padding: '12px 0' }}>حجم الأعمال</th>
-              <th style={{ padding: '12px 0' }}>تاريخ التجاوز</th>
-              <th style={{ padding: '12px 0' }}>الإجراء</th>
+      {/* الجدول */}
+      <div className="bg-white shadow-md border border-[#e8dcc8] rounded-xl overflow-hidden">
+        <div className="p-4 border-b border-[#e8dcc8] bg-[#faf6ec]">
+          <h3 className="font-bold text-base text-gray-800">
+            متابعة العملاء: التسجيل في القيمة المضافة
+          </h3>
+        </div>
+        <table className="w-full text-right border-collapse">
+          <thead className="bg-[#faf6ec] border-b border-[#e8dcc8]">
+            <tr>
+              <th className="p-4 text-sm font-semibold text-gray-700">العميل</th>
+              <th className="p-4 text-sm font-semibold text-gray-700">حجم الأعمال</th>
+              <th className="p-4 text-sm font-semibold text-gray-700">تاريخ التجاوز</th>
+              <th className="p-4 text-sm font-semibold text-gray-700">الإجراء</th>
             </tr>
           </thead>
-          <tbody>
-            <tr style={{ borderBottom: '1px solid #f1f5f9' }}>
-              <td style={{ padding: '16px 0' }}>شركة الرواد للتجارة</td>
-              <td style={{ padding: '16px 0' }}>480,000 ج.م</td>
-              <td style={{ padding: '16px 0' }}>2026-07-01</td>
-              <td style={{ padding: '16px 0' }}>
-                <button style={{ 
-                  backgroundColor: '#3b82f6', 
-                  color: 'white', 
-                  padding: '6px 12px', 
-                  borderRadius: '6px', 
-                  border: 'none', 
-                  cursor: 'pointer',
-                  fontSize: '12px'
-                }}>
+          <tbody className="divide-y divide-[#f0e9d8]">
+            <tr className="hover:bg-[#faf6ec] transition-colors">
+              <td className="p-4 font-medium text-gray-900">شركة الرواد للتجارة</td>
+              <td className="p-4 text-gray-600">480,000 ج.م</td>
+              <td className="p-4 text-gray-600">2026-07-01</td>
+              <td className="p-4">
+                <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-1.5 text-sm rounded-md transition-all shadow-sm">
                   بدء التسجيل
                 </button>
               </td>

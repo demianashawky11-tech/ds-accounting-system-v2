@@ -4,10 +4,9 @@ import { useTranslation } from 'react-i18next';
 const CalendarPage = () => {
   const { t } = useTranslation();
   
-  // حالات النظام
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
-  const [filterStatus, setFilterStatus] = useState('all'); // الفلتر
-  const [searchQuery, setSearchQuery] = useState(''); // البحث
+  const [filterStatus, setFilterStatus] = useState('all');
+  const [searchQuery, setSearchQuery] = useState('');
 
   const appointments = [
     { id: 1, client: 'شركة الهدى للتجارة', task: 'إقرار القيمة المضافة', dueDate: '2026-07-15', status: 'upcoming' },
@@ -16,7 +15,6 @@ const CalendarPage = () => {
     { id: 4, client: 'شركة الإبداع', task: 'تجديد السجل التجاري', dueDate: '2026-08-01', status: 'upcoming' },
   ];
 
-  // 1. دمج الفلترة والبحث معاً (هذا ما يجعل النظام مرناً)
   const processedData = appointments.filter(item => {
     const matchesStatus = filterStatus === 'all' || item.status === filterStatus;
     const matchesSearch = item.client.toLowerCase().includes(searchQuery.toLowerCase()) || 
@@ -24,7 +22,6 @@ const CalendarPage = () => {
     return matchesStatus && matchesSearch;
   });
 
-  // 2. الترتيب
   const sortedData = [...processedData].sort((a, b) => {
     if (!sortConfig.key) return 0;
     const aValue = a[sortConfig.key];
@@ -40,23 +37,43 @@ const CalendarPage = () => {
     setSortConfig({ key, direction });
   };
 
-  return (
-    <div style={{ padding: '24px' }}>
-      <h2 style={{ fontSize: '24px', color: 'var(--text-h)', marginBottom: '24px' }}>📅 {t('calendar.title') || 'التقويم والمواعيد'}</h2>
+  // دالة مساعدة للون الشارة حسب الحالة
+  const getStatusStyle = (status) => {
+    switch (status) {
+      case 'due_today':
+        return 'bg-amber-100 text-amber-800';
+      case 'overdue':
+        return 'bg-red-100 text-red-700';
+      case 'upcoming':
+        return 'bg-emerald-100 text-emerald-700';
+      default:
+        return 'bg-gray-100 text-gray-700';
+    }
+  };
 
-      {/* شريط الأدوات الذكي */}
-      <div style={{ display: 'flex', gap: '12px', marginBottom: '20px' }}>
-        <input 
-          type="text" 
+  return (
+    <div className="p-4 md:p-6 w-full h-full">
+
+      {/* العنوان */}
+      <div className="mb-6">
+        <h1 className="text-2xl font-bold text-gray-800">
+          📅 {t('navigation.calendar')}
+        </h1>
+      </div>
+
+      {/* شريط الأدوات */}
+      <div className="flex flex-col md:flex-row gap-3 mb-6">
+        <input
+          type="text"
           placeholder="🔍 بحث باسم العميل أو المهمة..."
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          style={{ flex: 2, padding: '10px', borderRadius: '8px', border: '1px solid var(--border)', outline: 'none' }}
+          className="flex-1 px-4 py-2 bg-white border border-[#e8dcc8] rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300"
         />
-        <select 
+        <select
           value={filterStatus}
           onChange={(e) => setFilterStatus(e.target.value)}
-          style={{ flex: 1, padding: '10px', borderRadius: '8px', border: '1px solid var(--border)', cursor: 'pointer' }}
+          className="md:w-48 px-4 py-2 bg-white border border-[#e8dcc8] rounded-lg cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-300"
         >
           <option value="all">كل الحالات</option>
           <option value="due_today">مستحق اليوم</option>
@@ -66,43 +83,58 @@ const CalendarPage = () => {
       </div>
 
       {/* الجدول */}
-      <div style={{ backgroundColor: 'var(--bg)', borderRadius: '12px', border: '1px solid var(--border)', overflowX: 'auto' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'start' }}>
-          <thead>
-            <tr style={{ backgroundColor: 'var(--code-bg)', borderBottom: '1px solid var(--border)' }}>
-              {['client', 'task', 'dueDate', 'status'].map((key) => (
-                <th key={key} onClick={() => handleSort(key)} style={{ padding: '16px', color: 'var(--text-h)', fontWeight: '600', cursor: 'pointer' }}>
-                  {key === 'client' ? 'العميل' : key === 'task' ? 'المهمة' : key === 'dueDate' ? 'تاريخ الاستحقاق' : 'الحالة'}
-                  {sortConfig.key === key && (sortConfig.direction === 'asc' ? ' 🔼' : ' 🔽')}
-                </th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {sortedData.length > 0 ? (
-              sortedData.map((item) => (
-                <tr key={item.id} style={{ borderBottom: '1px solid var(--border)' }}>
-                  <td style={{ padding: '16px', color: 'var(--text-h)' }}>{item.client}</td>
-                  <td style={{ padding: '16px', color: 'var(--text)' }}>{item.task}</td>
-                  <td style={{ padding: '16px', color: 'var(--text)' }}><code>{item.dueDate}</code></td>
-                  <td style={{ padding: '16px' }}>
-                    <span style={{
-                      padding: '4px 10px', borderRadius: '6px', fontSize: '12px', fontWeight: '500',
-                      backgroundColor: item.status === 'due_today' ? '#fef3c7' : item.status === 'overdue' ? '#fee2e2' : '#dcfce7',
-                      color: item.status === 'due_today' ? '#92400e' : item.status === 'overdue' ? '#991b1b' : '#166534'
-                    }}>
-                      {item.status === 'due_today' ? 'مستحق اليوم' : item.status === 'overdue' ? 'متأخر' : 'قادم'}
-                    </span>
+      <div className="bg-white shadow-md border border-[#e8dcc8] rounded-xl overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-right border-collapse">
+            <thead className="bg-[#faf6ec] border-b border-[#e8dcc8]">
+              <tr>
+                {[
+                  { key: 'client', label: 'العميل' },
+                  { key: 'task', label: 'المهمة' },
+                  { key: 'dueDate', label: 'تاريخ الاستحقاق' },
+                  { key: 'status', label: 'الحالة' },
+                ].map((col) => (
+                  <th
+                    key={col.key}
+                    onClick={() => handleSort(col.key)}
+                    className="p-4 text-sm font-semibold text-gray-700 cursor-pointer hover:bg-[#f0e9d8] transition-colors"
+                  >
+                    {col.label}
+                    {sortConfig.key === col.key && (
+                      <span className="mr-1">{sortConfig.direction === 'asc' ? '🔼' : '🔽'}</span>
+                    )}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-[#f0e9d8]">
+              {sortedData.length > 0 ? (
+                sortedData.map((item) => (
+                  <tr key={item.id} className="hover:bg-[#faf6ec] transition-colors">
+                    <td className="p-4 font-medium text-gray-900">{item.client}</td>
+                    <td className="p-4 text-gray-600">{item.task}</td>
+                    <td className="p-4 text-gray-600">
+                      <code className="bg-[#faf6ec] px-2 py-1 rounded text-sm">{item.dueDate}</code>
+                    </td>
+                    <td className="p-4">
+                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusStyle(item.status)}`}>
+                        {item.status === 'due_today' ? 'مستحق اليوم'
+                          : item.status === 'overdue' ? 'متأخر'
+                          : 'قادم'}
+                      </span>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan="4" className="p-8 text-center text-gray-500">
+                    لا توجد نتائج تطابق بحثك
                   </td>
                 </tr>
-              ))
-            ) : (
-              <tr>
-                <td colSpan="4" style={{ padding: '40px', textAlign: 'center', color: 'var(--text)' }}>لا توجد نتائج تطابق بحثك</td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );

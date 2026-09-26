@@ -1,11 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useLanguage } from '../../contexts/LanguageContext'; // استيراد الـ Hook
+import { useLanguage } from '../../contexts/LanguageContext';
 
 const ClientsPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { t } = useLanguage(); // استدعاء الترجمة من الـ Context
+  const { t } = useLanguage();
   const [clients, setClients] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
 
@@ -14,9 +14,7 @@ const ClientsPage = () => {
     setClients(savedClients);
   }, [location]);
 
-  // دالة حذف العميل
   const deleteClient = (clientCode) => {
-    // استخدمنا t هنا أيضاً لترجمة نص التنبيه
     if (window.confirm("هل أنت متأكد من حذف هذا العميل؟")) {
       const updatedClients = clients.filter(c => c.code !== clientCode);
       setClients(updatedClients);
@@ -24,67 +22,83 @@ const ClientsPage = () => {
     }
   };
 
-  // فلترة العملاء
-  const filteredClients = clients.filter(c => 
+  const filteredClients = clients.filter(c =>
     (c.clientName?.toLowerCase().includes(searchTerm.toLowerCase())) ||
     (c.code?.toLowerCase().includes(searchTerm.toLowerCase())) ||
     (c.fileNumber?.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   return (
-    <div style={{ padding: '20px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-        <h2>👥 {t.clients.list_title}</h2> {/* تم تحديث العنوان */}
-        
-        <input 
-          type="text" 
-          placeholder={t.clients.search_placeholder} // تم تحديث مكان البحث
+    <div className="p-4 md:p-6 w-full h-full">
+
+      {/* الهيدر */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+        <h1 className="text-2xl font-bold text-gray-800">
+          👥 {t.clients.list_title}
+        </h1>
+
+        <input
+          type="text"
+          placeholder={t.clients.search_placeholder}
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
-          style={{ padding: '10px', width: '300px', borderRadius: '5px', border: '1px solid #ccc' }}
+          className="px-4 py-2 w-full md:w-[300px] border border-[#e8dcc8] rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-blue-300"
         />
 
-        <button 
-          onClick={() => navigate('/clients/add')} 
-          style={{ padding: '10px 20px', backgroundColor: '#2563eb', color: '#fff', border: 'none', borderRadius: '5px', cursor: 'pointer' }}
+        <button
+          onClick={() => navigate('/clients/add')}
+          className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-all shadow-sm"
         >
-          ➕ {t.clients.add_new}
+          + {t.clients.add_new}
         </button>
       </div>
-      
-      <table style={{ width: '100%', marginTop: '20px', borderCollapse: 'collapse' }}>
-        <thead>
-          <tr style={{ backgroundColor: '#f1f5f9', textAlign: 'right' }}>
-            <th style={{ padding: '12px' }}>{t.clients.client_name}</th>
-            <th style={{ padding: '12px' }}>{t.clients.client_code}</th>
-            <th style={{ padding: '12px' }}>{t.clients.file_number}</th>
-            <th style={{ padding: '12px' }}>{t.actions.actions_col}</th>
-          </tr>
-        </thead>
-        <tbody>
-          {filteredClients.map((client, index) => (
-            <tr key={index} style={{ borderBottom: '1px solid #e2e8f0' }}>
-              <td style={{ padding: '12px' }}>{client.clientName || '---'}</td>
-              <td style={{ padding: '12px' }}>{client.code}</td>
-              <td style={{ padding: '12px' }}>{client.fileNumber}</td>
-              <td style={{ padding: '12px', display: 'flex', gap: '10px' }}>
-                <button 
-                  onClick={() => navigate(`/clients/details/${client.code}`)} 
-                  style={{ padding: '6px 12px', backgroundColor: '#10b981', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
-                >
-                  {t.actions.view_data}
-                </button>
-                <button 
-                  onClick={() => deleteClient(client.code)} 
-                  style={{ padding: '6px 12px', backgroundColor: '#ef4444', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
-                >
-                  {t.actions.delete}
-                </button>
-              </td>
+
+      {/* الجدول */}
+      <div className="bg-white shadow-md border border-[#e8dcc8] rounded-xl overflow-hidden">
+        <table className="w-full text-right border-collapse">
+          <thead className="bg-[#faf6ec] border-b border-[#e8dcc8]">
+            <tr>
+              <th className="p-4 text-sm font-semibold text-gray-700">{t.clients.client_name}</th>
+              <th className="p-4 text-sm font-semibold text-gray-700">{t.clients.client_code}</th>
+              <th className="p-4 text-sm font-semibold text-gray-700">{t.clients.file_number}</th>
+              <th className="p-4 text-sm font-semibold text-gray-700">{t.actions.actions_col}</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody className="divide-y divide-[#f0e9d8]">
+            {filteredClients.length === 0 ? (
+              <tr>
+                <td colSpan="4" className="p-8 text-center text-gray-500">
+                  لا توجد بيانات عملاء حتى الآن
+                </td>
+              </tr>
+            ) : (
+              filteredClients.map((client, index) => (
+                <tr key={index} className="hover:bg-[#faf6ec] transition-colors">
+                  <td className="p-4 text-gray-900 font-medium">{client.clientName || '---'}</td>
+                  <td className="p-4 text-gray-600">{client.code}</td>
+                  <td className="p-4 text-gray-600">{client.fileNumber}</td>
+                  <td className="p-4">
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => navigate(`/clients/details/${client.code}`)}
+                        className="px-4 py-1.5 bg-emerald-500 hover:bg-emerald-600 text-white text-sm rounded-md transition-all shadow-sm"
+                      >
+                        {t.actions.view_data}
+                      </button>
+                      <button
+                        onClick={() => deleteClient(client.code)}
+                        className="px-4 py-1.5 bg-red-500 hover:bg-red-600 text-white text-sm rounded-md transition-all shadow-sm"
+                      >
+                        {t.actions.delete}
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 };

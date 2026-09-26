@@ -36,7 +36,7 @@ const AppRoutes = () => {
         {/* العملاء */}
         <Route path="/clients" element={<ClientsPage />} />
         <Route path="/clients/add" element={<AddClientPage />} />
-        <Route path="/clients/:id" element={<ClientDetailsPage />} />
+        <Route path="/clients/details/:code" element={<ClientDetailsPage />} />
 
         {/* الإقرارات الضريبية */}
         <Route path="/tax-returns" element={<TaxReturnsPage />} />

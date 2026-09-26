@@ -1,11 +1,10 @@
 import React, { useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import AddTaskModal from '../../components/modals/AddTaskModal'; 
+import AddTaskModal from '../../components/modals/AddTaskModal';
 
 const TasksPage = () => {
   const { t } = useTranslation();
-  
-  // 1. تحويل المهام إلى State لتتمكني من إضافة مهام جديدة
+
   const [tasks, setTasks] = useState([
     { id: 1, title: 'إعداد إقرار الربع الثاني', employee: 'أحمد علي', dueDate: '2026-07-10', priority: 'عالية', status: 'in_progress' },
     { id: 2, title: 'مراجعة قيود اليومية', employee: 'سارة محمود', dueDate: '2026-07-05', priority: 'متوسطة', status: 'pending' },
@@ -14,42 +13,78 @@ const TasksPage = () => {
 
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
-  const [isModalOpen, setIsModalOpen] = useState(false); // حالة النافذة
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const filteredTasks = tasks.filter(task => {
     const matchesStatus = filterStatus === 'all' || task.status === filterStatus;
-    const matchesSearch = task.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+    const matchesSearch = task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
                           task.employee.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesStatus && matchesSearch;
   });
 
-  // وظيفة لحفظ المهمة الجديدة
   const handleAddTask = (newTask) => {
     setTasks([...tasks, { ...newTask, id: Date.now() }]);
     setIsModalOpen(false);
   };
 
+  // ألوان الحالة
+  const getStatusStyle = (status) => {
+    switch (status) {
+      case 'completed':
+        return 'bg-emerald-100 text-emerald-700';
+      case 'in_progress':
+        return 'bg-blue-100 text-blue-700';
+      case 'pending':
+        return 'bg-amber-100 text-amber-800';
+      default:
+        return 'bg-gray-100 text-gray-700';
+    }
+  };
+
+  // ألوان الأولوية
+  const getPriorityStyle = (priority) => {
+    switch (priority) {
+      case 'عالية':
+        return 'text-red-600 font-semibold';
+      case 'متوسطة':
+        return 'text-amber-600 font-semibold';
+      case 'منخفضة':
+        return 'text-emerald-600 font-semibold';
+      default:
+        return 'text-gray-600';
+    }
+  };
+
   return (
-    <div style={{ padding: '24px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '24px' }}>
-        <h2 style={{ fontSize: '24px', color: 'var(--text-h)', margin: 0 }}>✅ {t('tasks.title')}</h2>
-        <button 
+    <div className="p-4 md:p-6 w-full h-full">
+
+      {/* الهيدر */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+        <h1 className="text-2xl font-bold text-gray-800">
+          ✅ {t('tasks.title')}
+        </h1>
+        <button
           onClick={() => setIsModalOpen(true)}
-          style={{ padding: '8px 16px', backgroundColor: '#3b82f6', color: '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer' }}
+          className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-all shadow-sm"
         >
           + {t('tasks.add_new')}
         </button>
       </div>
 
-      {/* شريط البحث والفلترة */}
-      <div style={{ display: 'flex', gap: '12px', marginBottom: '20px' }}>
-        <input 
-          type="text" 
-          placeholder={t('actions.search')} 
+      {/* البحث والفلترة */}
+      <div className="flex flex-col md:flex-row gap-3 mb-6">
+        <input
+          type="text"
+          placeholder={t('actions.search')}
+          value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          style={{ flex: 2, padding: '10px', borderRadius: '8px', border: '1px solid var(--border)' }}
+          className="flex-1 px-4 py-2 bg-white border border-[#e8dcc8] rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300"
         />
-        <select onChange={(e) => setFilterStatus(e.target.value)} style={{ padding: '10px', borderRadius: '8px', border: '1px solid var(--border)' }}>
+        <select
+          value={filterStatus}
+          onChange={(e) => setFilterStatus(e.target.value)}
+          className="md:w-48 px-4 py-2 bg-white border border-[#e8dcc8] rounded-lg cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-300"
+        >
           <option value="all">كل الحالات</option>
           <option value="pending">معلقة</option>
           <option value="in_progress">قيد التنفيذ</option>
@@ -57,39 +92,51 @@ const TasksPage = () => {
         </select>
       </div>
 
-      <div style={{ backgroundColor: 'var(--bg)', borderRadius: '12px', border: '1px solid var(--border)', overflowX: 'auto' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr style={{ backgroundColor: 'var(--code-bg)', borderBottom: '1px solid var(--border)' }}>
-              <th style={{ padding: '16px', textAlign: 'start' }}>{t('tasks.task_name')}</th>
-              <th style={{ padding: '16px', textAlign: 'start' }}>{t('tasks.employee')}</th>
-              <th style={{ padding: '16px', textAlign: 'start' }}>{t('tasks.due_date')}</th>
-              <th style={{ padding: '16px', textAlign: 'start' }}>{t('tasks.priority')}</th>
-              <th style={{ padding: '16px', textAlign: 'start' }}>{t('tasks.status')}</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filteredTasks.map(task => (
-              <tr key={task.id} style={{ borderBottom: '1px solid var(--border)' }}>
-                <td style={{ padding: '16px' }}>{task.title}</td>
-                <td style={{ padding: '16px' }}>{task.employee}</td>
-                <td style={{ padding: '16px' }}>{task.dueDate}</td>
-                <td style={{ padding: '16px' }}>{task.priority}</td>
-                <td style={{ padding: '16px' }}>
-                  <span style={{ 
-                    padding: '4px 8px', borderRadius: '6px', fontSize: '12px',
-                    backgroundColor: task.status === 'completed' ? '#dcfce7' : '#fef3c7' 
-                  }}>
-                    {t(`tasks.${task.status}`)}
-                  </span>
-                </td>
+      {/* الجدول */}
+      <div className="bg-white shadow-md border border-[#e8dcc8] rounded-xl overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-right border-collapse">
+            <thead className="bg-[#faf6ec] border-b border-[#e8dcc8]">
+              <tr>
+                <th className="p-4 text-sm font-semibold text-gray-700">{t('tasks.task_name')}</th>
+                <th className="p-4 text-sm font-semibold text-gray-700">{t('tasks.employee')}</th>
+                <th className="p-4 text-sm font-semibold text-gray-700">{t('tasks.due_date')}</th>
+                <th className="p-4 text-sm font-semibold text-gray-700">{t('tasks.priority')}</th>
+                <th className="p-4 text-sm font-semibold text-gray-700">{t('tasks.status')}</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-[#f0e9d8]">
+              {filteredTasks.length === 0 ? (
+                <tr>
+                  <td colSpan="5" className="p-8 text-center text-gray-500">
+                    لا توجد مهام مطابقة
+                  </td>
+                </tr>
+              ) : (
+                filteredTasks.map(task => (
+                  <tr key={task.id} className="hover:bg-[#faf6ec] transition-colors">
+                    <td className="p-4 font-medium text-gray-900">{task.title}</td>
+                    <td className="p-4 text-gray-600">{task.employee}</td>
+                    <td className="p-4 text-gray-600">
+                      <code className="bg-[#faf6ec] px-2 py-1 rounded text-sm">{task.dueDate}</code>
+                    </td>
+                    <td className={`p-4 ${getPriorityStyle(task.priority)}`}>
+                      {task.priority}
+                    </td>
+                    <td className="p-4">
+                      <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusStyle(task.status)}`}>
+                        {t(`tasks.${task.status}`)}
+                      </span>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
-      {/* استدعاء النافذة */}
+      {/* نافذة إضافة مهمة */}
       <AddTaskModal isOpen={isModalOpen} onClose={() => setIsModalOpen(false)} onSave={handleAddTask} />
     </div>
   );
