@@ -1,33 +1,30 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { supabase } from '../../lib/supabaseClient';
 
-// المكون الخارجي لضمان استقرار الكتابة
 const InputField = ({ label, name, type = "text", readOnly = false, value, onChange, hasError }) => (
-  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', marginBottom: '18px', width: '100%' }}>
-    <label style={{ fontSize: '16px', fontWeight: 'bold', textAlign: 'right', marginRight: '20px' }}>
+  <div className="flex items-center justify-end mb-4 w-full gap-4">
+    <label className="text-base font-bold text-right text-gray-700 w-44">
       {label}
     </label>
-    <input 
-      type={type} 
-      name={name} 
-      value={value || ''} 
+    <input
+      type={type}
+      name={name}
+      value={value || ''}
       onChange={onChange}
       readOnly={readOnly}
-      style={{ 
-        width: '300px', 
-        padding: '10px', 
-        border: hasError ? '2px solid red' : '1px solid #000', 
-        borderRadius: '4px',
-        backgroundColor: readOnly ? '#f3f4f6' : '#fff'
-      }} 
+      className={`w-[300px] px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-300 ${
+        hasError ? 'border-red-500' : 'border-[#e8dcc8]'
+      } ${readOnly ? 'bg-gray-100' : 'bg-white'}`}
     />
   </div>
 );
 
 const AddClientPage = () => {
-  const navigate = useNavigate(); // إضافة navigate للانتقال بعد الحفظ
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('basic');
   const [submitted, setSubmitted] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [formData, setFormData] = useState({
     code: `CLI-${new Date().getFullYear()}-${Math.floor(Math.random() * 9000) + 1000}`
   });
@@ -37,55 +34,105 @@ const AddClientPage = () => {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setSubmitted(true);
-    
+
     // التحقق من الحقول الإجبارية
     const requiredFields = ['code', 'clientName', 'fileNumber'];
     const missing = requiredFields.filter(field => !formData[field]);
 
     if (missing.length > 0) {
-      alert("يرجى ملء الحقول الإجبارية (رقم الملف، إسم الممول)");
+      alert('يرجى ملء الحقول الإجبارية (رقم الملف، اسم الممول)');
       return;
     }
 
-    // منطق الحفظ في localStorage
-    const existingClients = JSON.parse(localStorage.getItem('myClients') || '[]');
-    const updatedClients = [...existingClients, formData];
-    localStorage.setItem('myClients', JSON.stringify(updatedClients));
-    
-    console.log("تم حفظ بيانات العميل:", formData);
-    alert("تم حفظ بيانات العميل بنجاح!");
-    
-    // الانتقال لصفحة العملاء بعد الحفظ
-    navigate('/clients');
+    setLoading(true);
+
+    try {
+      // إعداد البيانات للـ Supabase
+      const clientData = {
+        code: formData.code,
+        client_name: formData.clientName,
+        file_number: formData.fileNumber,
+        legal_entity: formData.legalEntity || null,
+        tax_authority: formData.taxAuthority || null,
+        address: formData.address || null,
+        legal_representative: formData.legalRepresentative || null,
+        national_id: formData.nationalId || null,
+        phone: formData.phone || null,
+        email: formData.email || null,
+        email_password: formData.emailPassword || null,
+        tax_card: formData.taxCard || null,
+        tax_card_expiry: formData.taxCardExpiry || null,
+        activity: formData.activity || null,
+        commercial_register: formData.commercialRegister || null,
+        registration_date: formData.registrationDate || null,
+        commercial_expiry: formData.commercialExpiry || null,
+        vat_number: formData.vatNumber || null,
+        salary_tax: formData.salaryTax || null,
+        withholding_tax: formData.withholdingTax || null,
+        advance_payments: formData.advancePayments || null,
+        file_status: formData.fileStatus || null,
+        portal_username: formData.portalUsername || null,
+        portal_password: formData.portalPassword || null,
+        salary_password: formData.salaryPassword || null,
+        portal_login_password: formData.portalLoginPassword || null,
+        token: formData.token || null,
+      };
+
+      // الحفظ في Supabase
+      const { error } = await supabase
+        .from('clients')
+        .insert([clientData]);
+
+      if (error) {
+        console.error('خطأ Supabase:', error);
+        throw error;
+      }
+
+      alert('✅ تم حفظ بيانات العميل بنجاح في قاعدة البيانات!');
+      navigate('/clients');
+
+    } catch (err) {
+      console.error('خطأ في الحفظ:', err);
+      alert('❌ فشل الحفظ: ' + err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
+  const tabs = [
+    { id: 'basic', label: 'البيانات الأساسية' },
+    { id: 'tax', label: 'البيانات الضريبية' },
+    { id: 'portal', label: 'البوابة والتوكن' },
+  ];
+
   return (
-    <div style={{ padding: '40px', fontFamily: 'Arial, sans-serif' }}>
-      <h2 style={{ fontSize: '28px', marginBottom: '30px', textAlign: 'center' }}>إضافة عميل جديد</h2>
+    <div className="p-6 w-full">
+      <h2 className="text-2xl font-bold text-gray-800 mb-8 text-center">
+        إضافة عميل جديد
+      </h2>
 
       {/* التبويبات */}
-      <div style={{ display: 'flex', justifyContent: 'center', gap: '40px', marginBottom: '40px', borderBottom: '2px solid #ccc', paddingBottom: '10px' }}>
-        {['basic', 'tax', 'portal'].map((id, index) => (
-          <button key={id} onClick={() => setActiveTab(id)}
-            style={{ fontSize: '18px', fontWeight: 'bold', background: 'none', border: 'none', cursor: 'pointer',
-            color: activeTab === id ? '#000' : '#888', borderBottom: activeTab === id ? '3px solid #000' : 'none' }}>
-            {['البيانات الأساسية', 'البيانات الضريبية', 'البوابة والتوكن'][index]}
+      <div className="flex justify-center gap-10 mb-10 border-b-2 border-[#e8dcc8] pb-3">
+        {tabs.map((tab) => (
+          <button
+            key={tab.id}
+            type="button"
+            onClick={() => setActiveTab(tab.id)}
+            className={`text-lg font-bold transition-all ${
+              activeTab === tab.id
+                ? 'text-blue-600 border-b-4 border-blue-600 pb-2'
+                : 'text-gray-400 hover:text-gray-600'
+            }`}
+          >
+            {tab.label}
           </button>
         ))}
       </div>
 
-      <form onSubmit={handleSubmit} style={{ 
-        display: 'flex', 
-        flexDirection: 'column', 
-        alignItems: 'flex-end', 
-        width: '100%',
-        maxWidth: '800px', 
-        marginRight: '0', 
-        marginLeft: 'auto' 
-      }}>
+      <form onSubmit={handleSubmit} className="flex flex-col items-end w-full max-w-3xl ml-auto mr-auto">
         {activeTab === 'basic' && (
           <>
             <InputField label="كود العميل" name="code" value={formData.code} onChange={handleInputChange} readOnly={true} />
@@ -101,6 +148,7 @@ const AddClientPage = () => {
             <InputField label="كلمة المرور للإيميل" name="emailPassword" value={formData.emailPassword} onChange={handleInputChange} />
           </>
         )}
+
         {activeTab === 'tax' && (
           <>
             <InputField label="البطاقة الضريبية" name="taxCard" value={formData.taxCard} onChange={handleInputChange} />
@@ -116,6 +164,7 @@ const AddClientPage = () => {
             <InputField label="حالة الملف" name="fileStatus" value={formData.fileStatus} onChange={handleInputChange} />
           </>
         )}
+
         {activeTab === 'portal' && (
           <>
             <InputField label="إسم المستخدم للبوابة الإلكترونية" name="portalUsername" value={formData.portalUsername} onChange={handleInputChange} />
@@ -126,17 +175,16 @@ const AddClientPage = () => {
           </>
         )}
 
-        <button type="submit" style={{ 
-          marginTop: '20px', 
-          padding: '12px 60px', 
-          fontSize: '18px', 
-          fontWeight: 'bold', 
-          backgroundColor: '#abcfe8', 
-          border: '1px solid #000', 
-          cursor: 'pointer',
-          marginRight: '220px' 
-        }}>
-          حفظ
+        <button
+          type="submit"
+          disabled={loading}
+          className={`mt-8 px-16 py-3 text-lg font-bold rounded-lg shadow-md transition-all ${
+            loading
+              ? 'bg-gray-400 cursor-not-allowed'
+              : 'bg-blue-600 hover:bg-blue-700 text-white cursor-pointer'
+          }`}
+        >
+          {loading ? '⏳ جاري الحفظ...' : '💾 حفظ البيانات'}
         </button>
       </form>
     </div>

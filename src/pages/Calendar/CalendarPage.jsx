@@ -1,24 +1,85 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
+import { supabase } from '../../lib/supabaseClient';
+import AddAppointmentModal from '../../components/modals/AddAppointmentModal';
 
 const CalendarPage = () => {
   const { t } = useTranslation();
-  
-  const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
-  const [filterStatus, setFilterStatus] = useState('all');
+
+  const [appointments, setAppointments] = useState([]);
   const [searchQuery, setSearchQuery] = useState('');
+  const [filterStatus, setFilterStatus] = useState('all');
+  const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  const appointments = [
-    { id: 1, client: 'شركة الهدى للتجارة', task: 'إقرار القيمة المضافة', dueDate: '2026-07-15', status: 'upcoming' },
-    { id: 2, client: 'مؤسسة النور للمقاولات', task: 'ضريبة الدخل السنوية', dueDate: '2026-07-03', status: 'due_today' },
-    { id: 3, client: 'مصنع الشرق للبلاستيك', task: 'إقرار الخصم والإضافة', dueDate: '2026-06-25', status: 'overdue' },
-    { id: 4, client: 'شركة الإبداع', task: 'تجديد السجل التجاري', dueDate: '2026-08-01', status: 'upcoming' },
-  ];
+  // جلب المواعيد من Supabase
+  const fetchAppointments = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const { data, error } = await supabase
+        .from('appointments')
+        .select('*')
+        .order('due_date', { ascending: true });
 
+      if (error) throw error;
+      setAppointments(data || []);
+    } catch (err) {
+      console.error('خطأ في جلب المواعيد:', err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAppointments();
+  }, []);
+
+  // إضافة موعد
+  const handleAddAppointment = async (newAppointment) => {
+    try {
+      const { data, error } = await supabase
+        .from('appointments')
+        .insert([newAppointment])
+        .select();
+
+      if (error) throw error;
+
+      setAppointments([...(data || []), ...appointments]);
+      setIsModalOpen(false);
+      alert('✅ تم حفظ الموعد بنجاح');
+    } catch (err) {
+      console.error('خطأ في الحفظ:', err);
+      alert('❌ فشل الحفظ: ' + err.message);
+    }
+  };
+
+  // حذف موعد
+  const deleteAppointment = async (id) => {
+    if (!window.confirm('هل أنت متأكد من حذف هذا الموعد؟')) return;
+    try {
+      const { error } = await supabase
+        .from('appointments')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+      setAppointments(appointments.filter(a => a.id !== id));
+    } catch (err) {
+      console.error('خطأ في الحذف:', err);
+      alert('فشل الحذف: ' + err.message);
+    }
+  };
+
+  // فلترة وترتيب
   const processedData = appointments.filter(item => {
     const matchesStatus = filterStatus === 'all' || item.status === filterStatus;
-    const matchesSearch = item.client.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          item.task.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSearch =
+      item.client?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      item.task?.toLowerCase().includes(searchQuery.toLowerCase());
     return matchesStatus && matchesSearch;
   });
 
@@ -37,31 +98,44 @@ const CalendarPage = () => {
     setSortConfig({ key, direction });
   };
 
-  // دالة مساعدة للون الشارة حسب الحالة
+  // ألوان الحالة
   const getStatusStyle = (status) => {
     switch (status) {
-      case 'due_today':
-        return 'bg-amber-100 text-amber-800';
-      case 'overdue':
-        return 'bg-red-100 text-red-700';
-      case 'upcoming':
-        return 'bg-emerald-100 text-emerald-700';
-      default:
-        return 'bg-gray-100 text-gray-700';
+      case 'due_today':  return 'bg-amber-100 text-amber-800';
+      case 'overdue':    return 'bg-red-100 text-red-700';
+      case 'completed':  return 'bg-emerald-100 text-emerald-700';
+      case 'upcoming':   return 'bg-blue-100 text-blue-700';
+      default:           return 'bg-gray-100 text-gray-700';
+    }
+  };
+
+  const getStatusLabel = (status) => {
+    switch (status) {
+      case 'due_today':  return 'مستحق اليوم';
+      case 'overdue':    return 'متأخر';
+      case 'completed':  return 'مكتمل';
+      case 'upcoming':   return 'قادم';
+      default:           return status;
     }
   };
 
   return (
     <div className="p-4 md:p-6 w-full h-full">
 
-      {/* العنوان */}
-      <div className="mb-6">
+      {/* الهيدر */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
         <h1 className="text-2xl font-bold text-gray-800">
           📅 {t('navigation.calendar')}
         </h1>
+        <button
+          onClick={() => setIsModalOpen(true)}
+          className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg transition-all shadow-sm"
+        >
+          + إضافة موعد جديد
+        </button>
       </div>
 
-      {/* شريط الأدوات */}
+      {/* البحث والفلترة */}
       <div className="flex flex-col md:flex-row gap-3 mb-6">
         <input
           type="text"
@@ -79,8 +153,16 @@ const CalendarPage = () => {
           <option value="due_today">مستحق اليوم</option>
           <option value="overdue">متأخر</option>
           <option value="upcoming">قادم</option>
+          <option value="completed">مكتمل</option>
         </select>
       </div>
+
+      {/* رسالة الخطأ */}
+      {error && (
+        <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700">
+          ⚠️ {error}
+        </div>
+      )}
 
       {/* الجدول */}
       <div className="bg-white shadow-md border border-[#e8dcc8] rounded-xl overflow-hidden">
@@ -88,54 +170,95 @@ const CalendarPage = () => {
           <table className="w-full text-right border-collapse">
             <thead className="bg-[#faf6ec] border-b border-[#e8dcc8]">
               <tr>
-                {[
-                  { key: 'client', label: 'العميل' },
-                  { key: 'task', label: 'المهمة' },
-                  { key: 'dueDate', label: 'تاريخ الاستحقاق' },
-                  { key: 'status', label: 'الحالة' },
-                ].map((col) => (
-                  <th
-                    key={col.key}
-                    onClick={() => handleSort(col.key)}
-                    className="p-4 text-sm font-semibold text-gray-700 cursor-pointer hover:bg-[#f0e9d8] transition-colors"
-                  >
-                    {col.label}
-                    {sortConfig.key === col.key && (
-                      <span className="mr-1">{sortConfig.direction === 'asc' ? '🔼' : '🔽'}</span>
-                    )}
-                  </th>
-                ))}
+                <th
+                  onClick={() => handleSort('client')}
+                  className="p-4 text-sm font-semibold text-gray-700 cursor-pointer hover:bg-[#f0e9d8] transition-colors"
+                >
+                  العميل
+                  {sortConfig.key === 'client' && (
+                    <span className="mr-1">{sortConfig.direction === 'asc' ? '🔼' : '🔽'}</span>
+                  )}
+                </th>
+                <th
+                  onClick={() => handleSort('task')}
+                  className="p-4 text-sm font-semibold text-gray-700 cursor-pointer hover:bg-[#f0e9d8] transition-colors"
+                >
+                  المهمة
+                  {sortConfig.key === 'task' && (
+                    <span className="mr-1">{sortConfig.direction === 'asc' ? '🔼' : '🔽'}</span>
+                  )}
+                </th>
+                <th
+                  onClick={() => handleSort('due_date')}
+                  className="p-4 text-sm font-semibold text-gray-700 cursor-pointer hover:bg-[#f0e9d8] transition-colors"
+                >
+                  تاريخ الاستحقاق
+                  {sortConfig.key === 'due_date' && (
+                    <span className="mr-1">{sortConfig.direction === 'asc' ? '🔼' : '🔽'}</span>
+                  )}
+                </th>
+                <th className="p-4 text-sm font-semibold text-gray-700">الحالة</th>
+                <th className="p-4 text-sm font-semibold text-gray-700">إجراءات</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-[#f0e9d8]">
-              {sortedData.length > 0 ? (
+              {loading ? (
+                <tr>
+                  <td colSpan="5" className="p-8 text-center text-gray-500">
+                    ⏳ جاري التحميل من Supabase...
+                  </td>
+                </tr>
+              ) : sortedData.length === 0 ? (
+                <tr>
+                  <td colSpan="5" className="p-8 text-center text-gray-500">
+                    {searchQuery || filterStatus !== 'all'
+                      ? 'لا توجد نتائج مطابقة'
+                      : 'لا توجد مواعيد حتى الآن. اضغط "+ إضافة موعد جديد" للبدء.'}
+                  </td>
+                </tr>
+              ) : (
                 sortedData.map((item) => (
                   <tr key={item.id} className="hover:bg-[#faf6ec] transition-colors">
                     <td className="p-4 font-medium text-gray-900">{item.client}</td>
                     <td className="p-4 text-gray-600">{item.task}</td>
                     <td className="p-4 text-gray-600">
-                      <code className="bg-[#faf6ec] px-2 py-1 rounded text-sm">{item.dueDate}</code>
+                      <code className="bg-[#faf6ec] px-2 py-1 rounded text-sm">{item.due_date}</code>
                     </td>
                     <td className="p-4">
                       <span className={`px-3 py-1 rounded-full text-xs font-medium ${getStatusStyle(item.status)}`}>
-                        {item.status === 'due_today' ? 'مستحق اليوم'
-                          : item.status === 'overdue' ? 'متأخر'
-                          : 'قادم'}
+                        {getStatusLabel(item.status)}
                       </span>
+                    </td>
+                    <td className="p-4">
+                      <button
+                        onClick={() => deleteAppointment(item.id)}
+                        className="px-3 py-1 bg-red-500 hover:bg-red-600 text-white text-xs rounded-md transition-all"
+                      >
+                        حذف
+                      </button>
                     </td>
                   </tr>
                 ))
-              ) : (
-                <tr>
-                  <td colSpan="4" className="p-8 text-center text-gray-500">
-                    لا توجد نتائج تطابق بحثك
-                  </td>
-                </tr>
               )}
             </tbody>
           </table>
         </div>
       </div>
+
+      {/* عداد */}
+      {!loading && appointments.length > 0 && (
+        <div className="mt-4 text-sm text-gray-500 text-center">
+          إجمالي المواعيد: <strong>{appointments.length}</strong>
+          {(searchQuery || filterStatus !== 'all') && ` | نتائج البحث: ${sortedData.length}`}
+        </div>
+      )}
+
+      {/* نافذة إضافة موعد */}
+      <AddAppointmentModal
+        isOpen={isModalOpen}
+        onClose={() => setIsModalOpen(false)}
+        onSave={handleAddAppointment}
+      />
     </div>
   );
 };

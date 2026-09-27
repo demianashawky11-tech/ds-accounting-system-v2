@@ -1,22 +1,60 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { supabase } from '../../lib/supabaseClient';
 
 const ClientDetailsPage = () => {
   const { code } = useParams();
   const navigate = useNavigate();
   const [client, setClient] = useState(null);
   const [activeTab, setActiveTab] = useState('basic');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    const savedClients = JSON.parse(localStorage.getItem('myClients') || '[]');
-    const foundClient = savedClients.find(c => c.code === code);
-    setClient(foundClient);
+    const fetchClient = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const { data, error } = await supabase
+          .from('clients')
+          .select('*')
+          .eq('code', code)
+          .single();
+
+        if (error) throw error;
+        setClient(data);
+      } catch (err) {
+        console.error('خطأ في جلب بيانات العميل:', err);
+        setError(err.message);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (code) fetchClient();
   }, [code]);
 
-  if (!client) {
+  if (loading) {
     return (
       <div className="p-10 text-center text-gray-500">
-        جاري تحميل البيانات...
+        ⏳ جاري تحميل البيانات من Supabase...
+      </div>
+    );
+  }
+
+  if (error || !client) {
+    return (
+      <div className="p-10 text-center">
+        <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg text-red-700 inline-block">
+          ⚠️ {error || 'لم يتم العثور على العميل'}
+        </div>
+        <br />
+        <button
+          onClick={() => navigate('/clients')}
+          className="mt-4 px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg transition-all shadow-sm"
+        >
+          ← العودة للقائمة
+        </button>
       </div>
     );
   }
@@ -40,21 +78,24 @@ const ClientDetailsPage = () => {
 
       {/* العنوان */}
       <h1 className="text-2xl font-bold text-gray-800 border-b-2 border-blue-500 pb-3 mb-6">
-        تفاصيل العميل: {client.clientName}
+        تفاصيل العميل: {client.client_name}
       </h1>
 
       {/* التبويبات */}
-      <div className="flex gap-2 mb-6 border-b-2 border-[#e8dcc8]">
+      <div className="flex flex-wrap gap-2 mb-6 border-b-2 border-[#e8dcc8]">
         {tabs.map(tab => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
-            className={`
-              px-6 py-3 text-base font-semibold transition-all rounded-t-lg
-              ${activeTab === tab.id
-                ? `text-${tab.color}-600 bg-white border-b-2 border-${tab.color}-500 -mb-0.5 shadow-sm`
-                : 'text-gray-500 hover:text-gray-700 hover:bg-[#faf6ec]'}
-            `}
+            className={`px-6 py-3 text-base font-semibold transition-all rounded-t-lg ${
+              activeTab === tab.id
+                ? tab.color === 'blue'
+                  ? 'text-blue-600 bg-white border-b-2 border-blue-500 -mb-0.5 shadow-sm'
+                  : tab.color === 'emerald'
+                  ? 'text-emerald-600 bg-white border-b-2 border-emerald-500 -mb-0.5 shadow-sm'
+                  : 'text-violet-600 bg-white border-b-2 border-violet-500 -mb-0.5 shadow-sm'
+                : 'text-gray-500 hover:text-gray-700 hover:bg-[#faf6ec]'
+            }`}
           >
             {tab.label}
           </button>
@@ -70,10 +111,10 @@ const ClientDetailsPage = () => {
             </h3>
             <div className="space-y-3">
               <InfoRow label="كود العميل" value={client.code} />
-              <InfoRow label="رقم الملف" value={client.fileNumber} />
-              <InfoRow label="اسم الممول" value={client.clientName} />
-              <InfoRow label="الكيان القانوني" value={client.legalEntity} />
-              <InfoRow label="المأمورية" value={client.taxAuthority} />
+              <InfoRow label="رقم الملف" value={client.file_number} />
+              <InfoRow label="اسم الممول" value={client.client_name} />
+              <InfoRow label="الكيان القانوني" value={client.legal_entity} />
+              <InfoRow label="المأمورية" value={client.tax_authority} />
             </div>
           </div>
 
@@ -83,8 +124,8 @@ const ClientDetailsPage = () => {
             </h3>
             <div className="space-y-3">
               <InfoRow label="العنوان" value={client.address} />
-              <InfoRow label="الممثل القانوني" value={client.legalRepresentative} />
-              <InfoRow label="الرقم القومي" value={client.nationalId} />
+              <InfoRow label="الممثل القانوني" value={client.legal_representative} />
+              <InfoRow label="الرقم القومي" value={client.national_id} />
               <InfoRow label="الهاتف" value={client.phone} />
               <InfoRow label="البريد الإلكتروني" value={client.email} />
             </div>
@@ -99,12 +140,12 @@ const ClientDetailsPage = () => {
               البيانات الضريبية
             </h3>
             <div className="space-y-3">
-              <InfoRow label="البطاقة الضريبية" value={client.taxCard} />
-              <InfoRow label="سارية حتى" value={client.taxCardExpiry} />
+              <InfoRow label="البطاقة الضريبية" value={client.tax_card} />
+              <InfoRow label="سارية حتى" value={client.tax_card_expiry} />
               <InfoRow label="النشاط" value={client.activity} />
-              <InfoRow label="السجل التجاري" value={client.commercialRegister} />
-              <InfoRow label="تاريخ القيد" value={client.registrationDate} />
-              <InfoRow label="ساري حتى" value={client.commercialExpiry} />
+              <InfoRow label="السجل التجاري" value={client.commercial_register} />
+              <InfoRow label="تاريخ القيد" value={client.registration_date} />
+              <InfoRow label="ساري حتى" value={client.commercial_expiry} />
             </div>
           </div>
 
@@ -113,11 +154,11 @@ const ClientDetailsPage = () => {
               الضرائب
             </h3>
             <div className="space-y-3">
-              <InfoRow label="ضريبة القيمة المضافة" value={client.vatNumber} />
-              <InfoRow label="ضريبة المرتبات" value={client.salaryTax} />
-              <InfoRow label="الخصم تحت حساب الضريبة" value={client.withholdingTax} />
-              <InfoRow label="الدفعات المقدمة" value={client.advancePayments} />
-              <InfoRow label="حالة الملف" value={client.fileStatus} />
+              <InfoRow label="ضريبة القيمة المضافة" value={client.vat_number} />
+              <InfoRow label="ضريبة المرتبات" value={client.salary_tax} />
+              <InfoRow label="الخصم تحت حساب الضريبة" value={client.withholding_tax} />
+              <InfoRow label="الدفعات المقدمة" value={client.advance_payments} />
+              <InfoRow label="حالة الملف" value={client.file_status} />
             </div>
           </div>
         </div>
@@ -130,9 +171,10 @@ const ClientDetailsPage = () => {
               البوابة الإلكترونية
             </h3>
             <div className="space-y-3">
-              <InfoRow label="اسم المستخدم" value={client.portalUsername} />
-              <InfoRow label="كلمة المرور" value={client.portalPassword ? '••••••••' : null} />
-              <InfoRow label="كلمة مرور ضريبة المرتبات" value={client.salaryPassword ? '••••••••' : null} />
+              <InfoRow label="اسم المستخدم" value={client.portal_username} />
+              <InfoRow label="كلمة المرور" value={client.portal_password ? '••••••••' : null} />
+              <InfoRow label="كلمة مرور ضريبة المرتبات" value={client.salary_password ? '••••••••' : null} />
+              <InfoRow label="كلمة مرور البورتال" value={client.portal_login_password ? '••••••••' : null} />
             </div>
           </div>
 
@@ -152,7 +194,7 @@ const ClientDetailsPage = () => {
 
 // مكوّن مساعد لعرض صف من المعلومات
 const InfoRow = ({ label, value }) => (
-  <div className="flex justify-between items-center py-1 border-b border-dashed border-[#f0e9d8] last:border-0">
+  <div className="flex justify-between items-center py-2 border-b border-dashed border-[#f0e9d8] last:border-0">
     <span className="text-sm text-gray-500 font-medium">{label}:</span>
     <span className="text-sm text-gray-900 font-semibold">{value || '---'}</span>
   </div>

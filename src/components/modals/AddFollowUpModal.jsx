@@ -1,45 +1,42 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
 
-const AddTaxReturnModal = ({ isOpen, onClose, onSave }) => {
-  const [returnData, setReturnData] = useState({
-    client_name: '',
-    return_type: 'قيمة مضافة',
-    period: '',
-    due_date: '',
-    amount: '',
-    status: 'upcoming',
+const AddFollowUpModal = ({ isOpen, onClose, onSave }) => {
+  const [loading, setLoading] = useState(false);
+  const [followUpData, setFollowUpData] = useState({
+    client: '',
+    work_volume: '',
+    exceeded_date: '',
+    action: '',
+    status: 'pending',
     notes: '',
   });
-  const [loading, setLoading] = useState(false);
 
   if (!isOpen) return null;
 
   const handleChange = (e) => {
     const { name, value } = e.target;
-    setReturnData(prev => ({ ...prev, [name]: value }));
+    setFollowUpData(prev => ({ ...prev, [name]: value }));
   };
 
   const handleSave = async () => {
-    if (!returnData.client_name || !returnData.due_date) {
-      alert('يرجى ملء الحقول الإجبارية: اسم العميل وتاريخ الاستحقاق');
+    if (!followUpData.client) {
+      alert('يرجى ملء اسم العميل');
       return;
     }
 
     setLoading(true);
     try {
-      // تحويل amount إلى رقم
       const dataToSave = {
-        ...returnData,
-        amount: returnData.amount ? parseFloat(returnData.amount) : 0,
+        ...followUpData,
+        work_volume: followUpData.work_volume ? parseFloat(followUpData.work_volume) : 0,
       };
       await onSave(dataToSave);
-      setReturnData({
-        client_name: '',
-        return_type: 'قيمة مضافة',
-        period: '',
-        due_date: '',
-        amount: '',
-        status: 'upcoming',
+      setFollowUpData({
+        client: '',
+        work_volume: '',
+        exceeded_date: '',
+        action: '',
+        status: 'pending',
         notes: '',
       });
     } finally {
@@ -59,19 +56,20 @@ const AddTaxReturnModal = ({ isOpen, onClose, onSave }) => {
         {/* رأس النافذة */}
         <div className="px-6 py-4 border-b border-[#e8dcc8] bg-[#faf6ec] rounded-t-xl">
           <h3 className="text-lg font-bold text-gray-800">
-            ➕ إنشاء إقرار ضريبي جديد
+            ⭐ إضافة متابعة جديدة
           </h3>
         </div>
 
         {/* الحقول */}
         <div className="p-6 flex flex-col gap-4">
+
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              اسم العميل <span className="text-red-500">*</span>
+              العميل <span className="text-red-500">*</span>
             </label>
             <input
-              name="client_name"
-              value={returnData.client_name}
+              name="client"
+              value={followUpData.client}
               onChange={handleChange}
               type="text"
               placeholder="مثال: شركة الأمل"
@@ -81,42 +79,25 @@ const AddTaxReturnModal = ({ isOpen, onClose, onSave }) => {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              نوع الإقرار
-            </label>
-            <select
-              name="return_type"
-              value={returnData.return_type}
-              onChange={handleChange}
-              className="w-full px-4 py-2 border border-[#e8dcc8] rounded-lg cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-300"
-            >
-              <option value="قيمة مضافة">ضريبة القيمة المضافة</option>
-              <option value="دخل سنوي">ضريبة الدخل السنوية</option>
-              <option value="خصم وإضافة">الخصم والإضافة</option>
-              <option value="مرتبات">ضريبة المرتبات</option>
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              الفترة
+              حجم الأعمال (ج.م)
             </label>
             <input
-              name="period"
-              value={returnData.period}
+              name="work_volume"
+              value={followUpData.work_volume}
               onChange={handleChange}
-              type="text"
-              placeholder="مثال: الربع الثاني 2026"
+              type="number"
+              placeholder="0"
               className="w-full px-4 py-2 border border-[#e8dcc8] rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300"
             />
           </div>
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              تاريخ الاستحقاق <span className="text-red-500">*</span>
+              تاريخ تجاوز الحد
             </label>
             <input
-              name="due_date"
-              value={returnData.due_date}
+              name="exceeded_date"
+              value={followUpData.exceeded_date}
               onChange={handleChange}
               type="date"
               className="w-full px-4 py-2 border border-[#e8dcc8] rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300"
@@ -125,14 +106,14 @@ const AddTaxReturnModal = ({ isOpen, onClose, onSave }) => {
 
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">
-              المبلغ (ج.م)
+              الإجراء
             </label>
             <input
-              name="amount"
-              value={returnData.amount}
+              name="action"
+              value={followUpData.action}
               onChange={handleChange}
-              type="number"
-              placeholder="0"
+              type="text"
+              placeholder="مثال: بدء التسجيل في القيمة المضافة"
               className="w-full px-4 py-2 border border-[#e8dcc8] rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300"
             />
           </div>
@@ -143,14 +124,13 @@ const AddTaxReturnModal = ({ isOpen, onClose, onSave }) => {
             </label>
             <select
               name="status"
-              value={returnData.status}
+              value={followUpData.status}
               onChange={handleChange}
               className="w-full px-4 py-2 border border-[#e8dcc8] rounded-lg cursor-pointer focus:outline-none focus:ring-2 focus:ring-blue-300"
             >
-              <option value="upcoming">قادم</option>
-              <option value="due_today">مستحق اليوم</option>
-              <option value="overdue">متأخر</option>
-              <option value="filed">تم التقديم</option>
+              <option value="pending">قيد المتابعة</option>
+              <option value="in_progress">جاري التنفيذ</option>
+              <option value="done">مكتمل</option>
             </select>
           </div>
 
@@ -160,13 +140,14 @@ const AddTaxReturnModal = ({ isOpen, onClose, onSave }) => {
             </label>
             <textarea
               name="notes"
-              value={returnData.notes}
+              value={followUpData.notes}
               onChange={handleChange}
               rows="2"
               placeholder="أي ملاحظات إضافية..."
               className="w-full px-4 py-2 border border-[#e8dcc8] rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-300 resize-none"
             />
           </div>
+
         </div>
 
         {/* الأزرار */}
@@ -174,18 +155,20 @@ const AddTaxReturnModal = ({ isOpen, onClose, onSave }) => {
           <button
             onClick={onClose}
             disabled={loading}
-            className="px-6 py-2 rounded-lg border border-[#e8dcc8] bg-white text-gray-700 hover:bg-gray-50 transition-all"
+            className="px-6 py-2 rounded-lg border border-[#e8dcc8] bg-white text-gray-700 hover:bg-gray-50 transition-all disabled:opacity-50"
           >
             إلغاء
           </button>
           <button
             onClick={handleSave}
             disabled={loading}
-            className={`px-6 py-2 rounded-lg transition-all shadow-sm ${
-              loading ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700 text-white'
+            className={`px-6 py-2 rounded-lg shadow-sm transition-all ${
+              loading
+                ? 'bg-gray-400 cursor-not-allowed text-white'
+                : 'bg-blue-600 hover:bg-blue-700 text-white'
             }`}
           >
-            {loading ? '⏳ جاري الحفظ...' : '💾 حفظ الإقرار'}
+            {loading ? '⏳ جاري الحفظ...' : '💾 حفظ المتابعة'}
           </button>
         </div>
       </div>
@@ -193,4 +176,4 @@ const AddTaxReturnModal = ({ isOpen, onClose, onSave }) => {
   );
 };
 
-export default AddTaxReturnModal;
+export default AddFollowUpModal;
